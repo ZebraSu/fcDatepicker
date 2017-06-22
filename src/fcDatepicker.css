@@ -14,7 +14,6 @@
 .date-wrap{
     display: none;
     position: absolute;
-    z-index: 2147483646;
     width: 498px;
     background: #fff;
     color: #666;
@@ -68,6 +67,10 @@
     height: 30px;
     text-align: center;
 }
+.date-wrap .date-body table td:hover{
+   background: #fffceb;
+}
+
 .date-wrap .date-body table th{
     font-size: 12px;
     height: 25px;
