@@ -14,8 +14,6 @@
             return setting;
         },
         _Event: function (parms) {
-            var count_next = 0;
-            var yy = 0;
             $('body').on('click','.date-wrap .date-month',function (e) {
                 // 日历头部点击事件
                var target = e.target;
@@ -23,71 +21,68 @@
                     $(target).addClass('active');
                     $(target).siblings().removeClass('active');
                 }
+                var activeDate =  _methods.GetActiveDate();
+                _methods.UIDrawBodyDate(activeDate);
                 parms.monthClick();
             });
             $('body').on('click','.date-wrap .date-btn-prev',function (e) {
                 // 日历上一月按钮点击事件
                 var target = e.target;
-                 var dd = new Date();
+                var date = new Date();
+                var pageMonth = $('.date-wrap .date-month');
+                var initMonth = pageMonth.last().attr('data-mm');
+                var initYear = pageMonth.last().attr('data-yy');
                 var activeMonth = $('.date-wrap .date-month.active');
-                if(activeMonth.data('mm') ===  dd.getMonth()+1){
+                if(pageMonth.first().attr('data-mm') == date.getMonth()+1 && pageMonth.first().attr('data-yy') == date.getFullYear()){
+                    if(activeMonth.index() != 0){
+                        activeMonth.prev().addClass('active');
+                        activeMonth.removeClass('active');
+                        var date =   _methods.GetActiveDate();
+                        _methods.UIDrawBodyDate(date);
+                    }else{
+                        return;
+                    }
                     return;
                 }
-                activeMonth.removeClass('active');
-                activeMonth.prev().addClass('active');
+
+                _methods.LoopMonthReduce(initYear,initMonth);
+                var date =  _methods.GetActiveDate();
+                _methods.UIDrawBodyDate(date);
                 parms.prevEvent();
             });
             $('body').on('click','.date-wrap .date-btn-next',function (e) {
                 // 日历下一月按钮点击事件
                 var target = e.target;
                 var activeMonth = $('.date-wrap .date-month.active');
-                 if(activeMonth.index() === 3){
-                 } else {
-                     // activeMonth.removeClass('active');
-                    // activeMonth.next().addClass('active');
-                }
-                if(count_next == 12){
-                    count_next = 0;
-                }else{
-                    count_next++;
-                }
-
-                $.each($('.date-wrap .date-month'),function (i,item) {
-                    var m = $(item).data('mm')+count_next;
-                    var mm;
-                   // var mm = m > 12 ? m-12:m;
-                    if(m > 12){
-                        mm = m-12;
-                        yy++;
-                    }else{
-                        mm = m;
-                    }
-                    $(item).attr('data-mm',mm); 
-                });
-
-
+                var initMonth = $('.date-wrap .date-month').eq(0).attr('data-mm');
+                var initYear = $('.date-wrap .date-month').eq(0).attr('data-yy');
+                _methods.LoopMonthPlus(initYear,initMonth);
+                var dateActive =   _methods.GetActiveDate();
+                _methods.UIDrawBodyDate(dateActive);
                 parms.nextEvent();
             });
             $('body').on('click','.date-wrap .date-body td',function (e) {
                 //当前日期点击事件
-                var target = e.target;
+                var $this = $(this);
+                var thisDay = $this.find('.data-day');
+                alert(thisDay.data('date'));
                 parms.daysClick();
             });
         },
-        UIDraw: function(yearMonth,dateDays) {
-             // 日历固定元素搭建
-            if(!yearMonth ||  !dateDays){
-                yearMonth,dateDays = '';
-            }
+        UIDraw: function() {
             var element = '<div class="date-wrap active">'+
                                         '<div class="date-header">'+
                                             '<a href="javascript:;" class="date-btn date-btn-prev">&lt;</a>'+
                                             '<span class="date-month-tag-warp">'+
-                                            yearMonth+
+                                                '<span class="date-month active" data-mm="" data-yy="" data-month=""></span>'+
+                                                '<span class="date-month " data-mm="" data-yy="" data-month=""></span>'+
+                                                '<span class="date-month " data-mm="" data-yy="" data-month=""></span>'+
+                                                '<span class="date-month " data-mm="" data-yy="" data-month=""></span>'+
                                             '</span>'+
                                             '<a href="javascript:;" class="date-btn date-btn-next">&gt;</a>'+
                                         '</div>'+
                                         '<div class="date-body">'+
+                                            '<div class="sloading"></div>'+
                                             '<table>'+
                                                 '<thead>'+
                                                     '<tr>'+
@@ -101,12 +96,19 @@
                                                     '</tr>'+
                                                 '</thead>'+
                                                 '<tbody>'+
-                                                dateDays+
                                                 '</tbody>'+
                                             '</table>'+
                                         '</div>'+
                                     '</div>';
             return element;
+        },
+        GetActiveDate: function () {
+            var active = $('.date-month.active');
+            return {
+                date:active.attr('data-month'),
+                mm:active.attr('data-mm'),
+                yy:active.attr('data-yy'),
+            }
         },
         GetDateStr:function (dayCount) {
             var dd = new Date();
@@ -130,16 +132,79 @@
                 month: dd.getMonth()+dayCount+1
             }
         },
-        UIDrawHeaderMonth: function () {
-            var eles = [];
-            for(var i=0;i<4;i++){
-                if(i == 0){
-                    eles.push('<span class="date-cur-month date-month active" data-mm="'+_methods.GetDateStr(i).month+'" data-month="'+_methods.GetDateStr(i).formatDate+'">'+_methods.GetDateStr(i).showDate+'</span>');
-                }else{
-                    eles.push('<span class="date-month" data-mm="'+_methods.GetDateStr(i).month+'" data-month="'+_methods.GetDateStr(i).formatDate+'">'+_methods.GetDateStr(i).showDate+'</span>');
-                }
+        Loading: function (isShow) {
+            if(isShow){
+                $('.date-wrap sloading').show();
+            }else{
+                $('.date-wrap sloading').hide();
             }
-            return eles.join('');
+        },
+        LoopMonthPlus: function (year,month) {
+            for(var i=0;i<4;i++){
+                month++;
+                if(month>12){
+                    year++;
+                    month = 1;
+                }
+            var head = $('.date-wrap .date-month');
+                   head.eq(i).text(year+'年'+month+'月')
+                  .attr('data-mm',month)
+                  .attr('data-yy',year)
+                  .attr('data-month',year+'-'+month);
+            }
+            month = month-3;
+            if(month<=0){
+                month = month+12;
+                year--;
+            }
+        },
+        LoopMonthReduce: function (year,month) {
+            var date = new Date();
+            var nowMonth = date.getMonth()+1;
+            for(var i=4;i>0;i--){
+                month--;
+                if(month < 1){
+                    year--;
+                    month = 12;
+                }
+                var head = $('.date-wrap .date-month');
+                head.eq(i-1).text(year+'年'+month+'月')
+                    .attr('data-mm',month)
+                    .attr('data-yy',year)
+                    .attr('data-month',year+'-'+month);
+            }
+            month = month+3;
+            if(month<=0){
+                month = month-12;
+                year++;
+            }
+        },
+        UIDrawBodyDate:function (date) {
+            var html = '';
+            $.getJSON('data.josn',function (result) {
+                _methods.Loading(true);
+                if(result.code == 1){
+                    for(var i=0; i<result.data.length;i++){
+                        var data =  result.data[i];
+                        var price = data.data.price ? "￥"+data.data.price : '';
+                        if(i%7===0){
+                            html+='<tr>';
+                        }
+                        html+= '<td><span class="data-day" data-date="'+data.ddate+'">'+data.day+'</span><span class="data-remate">'+price+' </span></td>';
+                        if(i%7===6){
+                            html+='</tr>';
+                        }
+                    }
+                    $('.date-wrap tbody').html(html);
+                }
+                _methods.Loading(false);
+            });
+        },
+        UIDrawHeaderMonth: function () {
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth();
+            _methods.LoopMonthPlus(year,month);
         },
         init: function (parms) {//初始化方法
             return this.each(function () {
@@ -164,9 +229,13 @@
     $.extend({
         initFcDate: function (parms) {
             var setting = _methods._extendsOption(parms);
-            var drawMonth = _methods.UIDrawHeaderMonth();
-            var drawMap =  _methods.UIDraw(drawMonth);
+            var drawMap =  _methods.UIDraw();
+            var date = new Date();
+            var nowMonth = date.getMonth();
+            var nowYear = date.getFullYear();
            setting.ele.append(drawMap);
+           _methods.UIDrawHeaderMonth();
+            _methods.UIDrawBodyDate();
            _methods._Event(setting);
         }
     });

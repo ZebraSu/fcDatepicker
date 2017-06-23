@@ -84,18 +84,7 @@
 <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
 <script src="fcDatepicker.js"></script>
 <script>
-//    //datamock
-//    var datetime = {
-//        days:{
-//            yy:'2017', //年
-//            mm:'06', //月
-//            dd:'22', //日
-//            remate:'￥500' //备注
-//        }
-//    }
-var dataReuslt = [
-        {ddate:'', weekday:'', day:'', data:{}}
-    ]
+    //参数：ele 指定插入的元素dom (jq对象), 默认插入 body
 
     var initFcDatepicker = $.initFcDate({
         monthClick: function () {
@@ -108,7 +97,7 @@ var dataReuslt = [
           //  alert('点击了下一月份');
         },
         daysClick: function () {
-            alert('点击了当前日期');
+            //alert('点击了当前日期');
         }
     });
 </script>
